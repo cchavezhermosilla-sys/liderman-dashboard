@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Homologaciones · LIDERMAN SOC</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #060914;
+  --surface: #0c1128;
+  --surface2: #111a35;
+  --border: rgba(255,255,255,0.07);
+  --accent: #e8343a;
+  --accent2: #ff6b35;
+  --gold: #f5c518;
+  --blue: #3b82f6;
+  --teal: #06d6a0;
+  --green: #10b981;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+  --text: #eef2ff;
+  --muted: #6b7cb3;
+  --card-glow: rgba(232,52,58,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; min-height:100vh; }
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, #0c1128 0%, #0f1f3d 50%, #1a0a0a 100%);
+  border-bottom: 1px solid rgba(232,52,58,0.3);
+  padding: 18px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top:0; z-index:100;
+  box-shadow: 0 4px 40px rgba(0,0,0,0.6);
+}
+.hdr-left { display:flex; align-items:center; gap:16px; }
+.logo-badge {
+  width:48px; height:48px; border-radius:12px;
+  background: linear-gradient(135deg, var(--accent), #c22);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue'; font-size:22px; color:#fff;
+  box-shadow: 0 0 20px rgba(232,52,58,0.5);
+}
+.hdr-title { font-family:'Bebas Neue'; font-size:28px; letter-spacing:2px; color:var(--text); }
+.hdr-sub { font-size:12px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.hdr-right { display:flex; align-items:center; gap:16px; }
+.live-badge {
+  display:flex; align-items:center; gap:6px; background:rgba(16,185,129,0.15);
+  border:1px solid rgba(16,185,129,0.4); padding:6px 14px; border-radius:20px;
+  font-size:12px; color:var(--green); font-weight:600;
+}
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.hdr-date { font-family:'Space Mono'; font-size:11px; color:var(--muted); }
+.brand-tag {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  font-family:'Bebas Neue'; font-size:16px; letter-spacing:3px;
+}
+
+/* FILTER BAR */
+.filter-bar {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding:12px 32px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+}
+.filter-group { display:flex; align-items:center; gap:8px; }
+.filter-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-right:4px; }
+.fbtn {
+  padding:5px 14px; border-radius:20px; border:1px solid var(--border);
+  background:transparent; color:var(--muted); font-family:'DM Sans'; font-size:13px;
+  cursor:pointer; transition:all 0.2s;
+}
+.fbtn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+.fbtn.active-year { background:rgba(232,52,58,0.2); border-color:var(--accent); color:var(--accent); font-weight:600; }
+.fbtn.active-prov { background:rgba(59,130,246,0.2); border-color:var(--blue); color:var(--blue); font-weight:600; }
+
+/* MAIN */
+main { padding:24px 32px; max-width:1800px; margin:0 auto; }
+
+/* KPI STRIP */
+.kpi-strip { display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-bottom:24px; }
+.kpi-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:20px; position:relative; overflow:hidden; cursor:default;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+.kpi-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+}
+.kpi-card.k-total::before { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.kpi-card.k-inv::before { background:linear-gradient(90deg,var(--gold),#f97316); }
+.kpi-card.k-nota::before { background:linear-gradient(90deg,var(--teal),var(--cyan)); }
+.kpi-card.k-fin::before { background:linear-gradient(90deg,var(--green),#34d399); }
+.kpi-card.k-proc::before { background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+.kpi-card.k-prov::before { background:linear-gradient(90deg,var(--purple),#c084fc); }
+.kpi-icon { font-size:20px; margin-bottom:8px; }
+.kpi-val { font-family:'Bebas Neue'; font-size:40px; line-height:1; margin-bottom:4px; }
+.kpi-card.k-total .kpi-val { color:var(--accent); }
+.kpi-card.k-inv .kpi-val { color:var(--gold); }
+.kpi-card.k-nota .kpi-val { color:var(--teal); }
+.kpi-card.k-fin .kpi-val { color:var(--green); }
+.kpi-card.k-proc .kpi-val { color:var(--blue); }
+.kpi-card.k-prov .kpi-val { color:var(--purple); }
+.kpi-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-trend { font-size:12px; margin-top:6px; color:var(--teal); font-weight:600; }
+.kpi-trend.down { color:var(--accent); }
+.kpi-bg-icon { position:absolute; right:12px; bottom:10px; font-size:40px; opacity:0.06; }
+
+/* SECTION TITLE */
+.section-title { font-family:'Bebas Neue'; font-size:18px; letter-spacing:2px; color:var(--muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.stag { background:rgba(232,52,58,0.15); color:var(--accent); padding:2px 10px; border-radius:10px; font-size:12px; }
+
+/* ROWS */
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:20px; }
+.row4 { display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:20px; }
+
+/* CARD */
+.card {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:20px; transition:box-shadow 0.2s;
+}
+.card:hover { box-shadow:0 4px 24px rgba(0,0,0,0.3); }
+.card-title { font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+.card-title .dot { width:8px; height:8px; border-radius:50%; }
+
+/* CHART CONTAINER */
+.chart-wrap { position:relative; height:240px; }
+.chart-wrap.tall { height:300px; }
+.chart-wrap.short { height:200px; }
+
+/* RANKING */
+.rank-list { display:flex; flex-direction:column; gap:8px; }
+.rank-item { display:flex; align-items:center; gap:10px; }
+.rn { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+.rn.g1 { background:linear-gradient(135deg,#f5c518,#f97316); color:#000; }
+.rn.g2 { background:rgba(160,160,160,0.3); color:#ccc; }
+.rn.g3 { background:rgba(139,90,43,0.3); color:#cd7f32; }
+.rn.gn { background:rgba(255,255,255,0.08); color:var(--muted); }
+.ri { flex:1; min-width:0; }
+.ri-name { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ri-sub { font-size:11px; color:var(--muted); }
+.rank-bar-row { display:flex; align-items:center; gap:8px; margin-top:3px; }
+.rank-track { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.rank-fill { height:100%; border-radius:2px; transition:width 0.6s ease; }
+.rank-val { font-family:'Space Mono'; font-size:13px; color:var(--text); font-weight:700; flex-shrink:0; }
+
+/* PROVIDER TABLE */
+.prov-table { width:100%; border-collapse:collapse; font-size:13px; }
+.prov-table th { text-align:left; padding:6px 10px; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); }
+.prov-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.prov-table tr:hover td { background:rgba(255,255,255,0.03); }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.badge-green { background:rgba(16,185,129,0.15); color:var(--green); }
+.badge-blue { background:rgba(59,130,246,0.15); color:var(--blue); }
+.badge-amber { background:rgba(245,197,24,0.15); color:var(--gold); }
+
+/* NEW CLIENTS */
+.new-clients-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:280px; overflow-y:auto; }
+.nc-item {
+  background:rgba(6,214,160,0.06); border:1px solid rgba(6,214,160,0.15);
+  border-radius:10px; padding:10px 12px;
+  display:flex; align-items:center; gap:8px;
+}
+.nc-year { font-family:'Space Mono'; font-size:10px; color:var(--teal); background:rgba(6,214,160,0.1); padding:2px 6px; border-radius:6px; flex-shrink:0; }
+.nc-name { font-size:12px; font-weight:500; line-height:1.3; }
+.new-clients-grid::-webkit-scrollbar { width:4px; }
+.new-clients-grid::-webkit-scrollbar-track { background:transparent; }
+.new-clients-grid::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* RESPONSABLE */
+.resp-item { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.resp-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+.resp-info { flex:1; }
+.resp-name { font-size:14px; font-weight:600; }
+.resp-count { font-size:12px; color:var(--muted); }
+.resp-bar { height:4px; border-radius:2px; margin-top:4px; }
+
+/* SCORE GAUGE */
+.gauge-wrap { display:flex; flex-direction:column; align-items:center; padding:10px 0; }
+.gauge-val { font-family:'Bebas Neue'; font-size:64px; line-height:1; }
+.gauge-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+.score-bars { width:100%; margin-top:16px; }
+.score-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.sbl { font-size:12px; color:var(--muted); width:36px; }
+.sbt { flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
+.sbf { height:100%; border-radius:3px; }
+.sbv { font-family:'Space Mono'; font-size:11px; color:var(--text); width:40px; text-align:right; }
+
+/* VENCIMIENTOS ALERT */
+.alert-strip {
+  background:linear-gradient(135deg, rgba(232,52,58,0.1), rgba(245,197,24,0.05));
+  border:1px solid rgba(232,52,58,0.3); border-radius:12px;
+  padding:14px 20px; margin-bottom:24px;
+  display:flex; align-items:center; gap:16px;
+}
+.alert-icon { font-size:28px; }
+.alert-content { flex:1; }
+.alert-title { font-size:14px; font-weight:700; color:var(--accent); }
+.alert-desc { font-size:12px; color:var(--muted); margin-top:2px; }
+.alert-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.apill { padding:3px 12px; border-radius:12px; font-size:12px; font-weight:600; }
+.apill-red { background:rgba(232,52,58,0.2); color:var(--accent); border:1px solid rgba(232,52,58,0.3); }
+.apill-amber { background:rgba(245,197,24,0.15); color:var(--gold); border:1px solid rgba(245,197,24,0.3); }
+.apill-blue { background:rgba(59,130,246,0.15); color:var(--blue); border:1px solid rgba(59,130,246,0.3); }
+
+/* HALLAZGOS */
+.hallazgo-item { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.haj-label { font-size:12px; color:var(--text); width:130px; flex-shrink:0; }
+.haj-track { flex:1; height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+.haj-fill { height:100%; border-radius:4px; }
+.haj-val { font-family:'Space Mono'; font-size:12px; width:28px; text-align:right; flex-shrink:0; }
+
+/* TIMELINE */
+.timeline { display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto; padding-right:4px; }
+.tl-item { display:flex; gap:10px; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid; }
+.tl-item.fin { border-color:var(--green); }
+.tl-item.proc { border-color:var(--blue); }
+.tl-date { font-family:'Space Mono'; font-size:10px; color:var(--muted); white-space:nowrap; }
+.tl-info { flex:1; }
+.tl-client { font-size:12px; font-weight:600; }
+.tl-detail { font-size:11px; color:var(--muted); }
+.tl-nota { font-family:'Space Mono'; font-size:13px; font-weight:700; color:var(--teal); margin-left:auto; flex-shrink:0; }
+.timeline::-webkit-scrollbar { width:4px; }
+.timeline::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* FOOTER */
+footer {
+  text-align:center; padding:24px 32px; border-top:1px solid var(--border);
+  font-size:12px; color:var(--muted); margin-top:8px;
+}
+footer span { color:var(--accent); font-weight:600; }
+
+/* TABS */
+.tabs { display:flex; gap:8px; margin-bottom:14px; }
+.tab { padding:4px 14px; border-radius:16px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:12px; cursor:pointer; transition:all 0.2s; font-family:'DM Sans'; }
+.tab.active { background:rgba(232,52,58,0.2); border-color:var(--accent); color:var(--accent); font-weight:600; }
+
+/* DONUT LEGEND */
+.donut-legend { display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+.dl-item { display:flex; align-items:center; gap:8px; font-size:12px; }
+.dl-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.dl-name { flex:1; color:var(--text); }
+.dl-val { font-family:'Space Mono'; font-size:11px; color:var(--muted); }
+
+/* GANTT */
+.gantt-container { overflow-x:auto; }
+.gantt-table { width:100%; min-width:860px; border-collapse:collapse; }
+.gantt-header { display:flex; background:var(--surface2); border-radius:8px; margin-bottom:8px; padding:8px 0; }
+.gantt-area-col { width:200px; flex-shrink:0; padding:0 12px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.gantt-weeks { flex:1; display:flex; }
+.gantt-week { flex:1; text-align:center; font-size:10px; color:var(--muted); font-family:'Space Mono'; }
+.gantt-row { display:flex; align-items:center; margin-bottom:6px; }
+.gantt-area { width:200px; flex-shrink:0; padding:0 12px; }
+.gantt-area-name { font-size:13px; font-weight:600; }
+.gantt-area-dept { font-size:10px; color:var(--muted); margin-top:1px; }
+.gantt-bars { flex:1; position:relative; height:36px; display:flex; align-items:center; }
+.gantt-grid-line { position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,0.04); }
+.gantt-bar {
+  position:absolute; height:26px; border-radius:6px;
+  display:flex; align-items:center; padding:0 10px;
+  font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+.gantt-bar-label { font-size:10px; color:rgba(255,255,255,0.85); }
+.gantt-delay-badge { 
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:10px; font-size:11px; font-weight:700;
+}
+.gantt-total-bar {
+  background:rgba(255,255,255,0.04); border:1px dashed rgba(255,255,255,0.1);
+  border-radius:8px; padding:12px 16px; margin-top:12px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.gantt-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; }
+.gl-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+.gl-box { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+.week-label { text-align:center; padding:4px; font-size:9px; color:var(--muted); font-family:'Space Mono'; }
+
+/* UPLOAD PANEL */
+.upload-panel {
+  background:linear-gradient(135deg, rgba(59,130,246,0.08), rgba(6,214,160,0.05));
+  border:1px solid rgba(59,130,246,0.25); border-radius:16px;
+  padding:20px; margin-bottom:24px;
+}
+.upload-title { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.upload-options { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+.upload-opt {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:14px; cursor:pointer; transition:all 0.2s; text-align:center;
+}
+.upload-opt:hover { border-color:rgba(59,130,246,0.4); background:rgba(59,130,246,0.06); }
+.upload-opt.active-opt { border-color:var(--blue); background:rgba(59,130,246,0.1); }
+.upload-opt-icon { font-size:24px; margin-bottom:6px; }
+.upload-opt-name { font-size:13px; font-weight:600; }
+.upload-opt-desc { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.4; }
+.upload-opt-badge { font-size:10px; padding:2px 8px; border-radius:8px; margin-top:6px; display:inline-block; }
+.badge-recommended { background:rgba(16,185,129,0.15); color:var(--green); }
+.badge-coming { background:rgba(107,124,179,0.15); color:var(--muted); }
+.badge-available { background:rgba(245,197,24,0.15); color:var(--gold); }
+
+.upload-action-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.upload-drop-zone {
+  flex:1; min-height:56px; border:2px dashed rgba(59,130,246,0.3);
+  border-radius:10px; display:flex; align-items:center; justify-content:center;
+  gap:8px; color:var(--muted); font-size:13px; cursor:pointer;
+  transition:all 0.2s; padding:0 20px;
+}
+.upload-drop-zone:hover, .upload-drop-zone.dragover {
+  border-color:var(--blue); color:var(--blue); background:rgba(59,130,246,0.06);
+}
+.upload-status { font-size:12px; color:var(--green); display:none; }
+input[type=file] { display:none; }
+
+/* ACTION BUTTONS */
+.action-btn {
+  display:flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:10px; border:none;
+  font-family:'DM Sans'; font-size:13px; font-weight:600;
+  cursor:pointer; transition:all 0.2s;
+}
+.btn-pdf { background:linear-gradient(135deg,rgba(232,52,58,0.25),rgba(255,107,53,0.2)); color:#ff8a80; border:1px solid rgba(232,52,58,0.5); font-weight:700; letter-spacing:0.3px; }
+.btn-pdf:hover { background:linear-gradient(135deg,rgba(232,52,58,0.4),rgba(255,107,53,0.3)); box-shadow:0 0 20px rgba(232,52,58,0.3); transform:translateY(-1px); }
+.btn-backup { background:rgba(245,197,24,0.15); color:var(--gold); border:1px solid rgba(245,197,24,0.3); }
+.btn-backup:hover { background:rgba(245,197,24,0.25); box-shadow:0 0 16px rgba(245,197,24,0.2); }
+.btn-export { background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3); }
+.btn-export:hover { background:rgba(16,185,129,0.25); }
+.btn-upload { background:rgba(59,130,246,0.2); color:var(--blue); border:1px solid rgba(59,130,246,0.4); }
+.btn-upload:hover { background:rgba(59,130,246,0.3); }
+.btn-info { background:rgba(167,139,250,0.15); color:var(--purple); border:1px solid rgba(167,139,250,0.3); }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:24px; right:24px; z-index:9999;
+  background:#1a2540; border:1px solid rgba(16,185,129,0.4);
+  border-radius:12px; padding:14px 20px;
+  display:flex; align-items:center; gap:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  transform:translateY(80px); opacity:0; transition:all 0.3s;
+  font-size:14px; min-width:280px;
+}
+.toast.show { transform:none; opacity:1; }
+.toast-icon { font-size:20px; }
+
+/* SYNC INDICATOR */
+.sync-badge {
+  display:flex; align-items:center; gap:5px; font-size:11px;
+  color:var(--muted); padding:4px 10px; border-radius:8px;
+  background:rgba(255,255,255,0.04); border:1px solid var(--border);
+}
+.sync-dot { width:6px; height:6px; border-radius:50%; }
+.sync-dot.synced { background:var(--green); animation:pulse 3s infinite; }
+.sync-dot.pending { background:var(--gold); }
+
+/* RESPONSIVE */
+@media(max-width:1200px){
+  .kpi-strip { grid-template-columns:repeat(3,1fr); }
+  .row3 { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:768px){
+  main { padding:16px; }
+  header { padding:12px 16px; }
+  .kpi-strip { grid-template-columns:1fr 1fr; }
+  .row2,.row3,.row4 { grid-template-columns:1fr; }
+}
+
+/* ANIMATE IN */
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+.kpi-card,.card { animation:fadeUp 0.4s ease both; }
+.kpi-card:nth-child(1){animation-delay:0.05s}
+.kpi-card:nth-child(2){animation-delay:0.1s}
+.kpi-card:nth-child(3){animation-delay:0.15s}
+.kpi-card:nth-child(4){animation-delay:0.2s}
+.kpi-card:nth-child(5){animation-delay:0.25s}
+.kpi-card:nth-child(6){animation-delay:0.3s}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hdr-left">
+    <div class="logo-badge">L</div>
+    <div>
+      <div class="hdr-title">Dashboard · Homologaciones & Auditorías</div>
+      <div class="hdr-sub">SOC LIDERMAN · Gestión de Calidad y Control de Proveedores</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="live-badge"><div class="live-dot"></div> GOOGLE SHEETS</div> ACTUALIZADO</div>
+    <div class="sync-badge"><div class="sync-dot synced" id="sync-dot"></div><span id="sync-label">Datos cargados</span></div>
+    <button class="action-btn btn-pdf" onclick="generarPDFEjecutivo()" title="Generar informe ejecutivo PDF para Jefe de SGI">📄 PDF Ejecutivo</button>
+    <button class="action-btn btn-backup" onclick="doBackup()">💾 Backup</button>
+    
+    <div>
+      <div class="hdr-date" id="cur-date"></div>
+      <div class="brand-tag">LIDERMAN</div>
+    </div>
+  </div>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Año:</span>
+    <button class="fbtn active-year" onclick="setYear('todos')">Todos</button>
+    <button class="fbtn" onclick="setYear(2023)">2023</button>
+    <button class="fbtn" onclick="setYear(2024)">2024</button>
+    <button class="fbtn" onclick="setYear(2025)">2025</button>
+    <button class="fbtn" onclick="setYear(2026)">2026</button>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Vista:</span>
+    <button class="fbtn active-prov" onclick="setView('general')">General</button>
+    <button class="fbtn" onclick="setView('financiero')">Financiero</button>
+    <button class="fbtn" onclick="setView('calidad')">Calidad</button>
+  </div>
+  <div class="filter-group" style="margin-left:auto">
+    <div id="gs-status" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">
+      <span id="sync-dot2" style="width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block"></span>
+      <span id="sync-label2">Conectando...</span>
+    </div>
+    <button class="fbtn" onclick="manualSync()" style="background:rgba(6,214,160,0.1);border-color:rgba(6,214,160,0.3);color:var(--teal);font-weight:600">🔄 Actualizar</button>
+  </div>
+</div>
+
+<!-- ALERT BANNER -->
+<div class="alert-strip">
+  <div class="alert-icon">⚠️</div>
+  <div class="alert-content">
+    <div class="alert-title">Estado de Certificados · Atención Requerida</div>
+    <div class="alert-desc">2 certificados vencidos detectados · 1 por vencer en menos de 2 meses · 16 procesos en curso que requieren seguimiento activo</div>
+    <div class="alert-pills">
+      <span class="apill apill-red">🔴 2 Vencidas</span>
+      <span class="apill apill-amber">🟡 1 Por vencer (2 meses)</span>
+      <span class="apill apill-blue">🔵 16 En Proceso</span>
+      <span class="apill apill-red" style="background:rgba(167,139,250,0.2);color:var(--purple);border-color:rgba(167,139,250,0.3)">📊 167 Total Gestionadas</span>
+    </div>
+  </div>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-card k-total">
+    <div class="kpi-icon">📋</div>
+    <div class="kpi-val" id="kpi-total">167</div>
+    <div class="kpi-label">Homologaciones Totales</div>
+    <div class="kpi-trend">↑ +33% vs 2023</div>
+    <div class="kpi-bg-icon">📋</div>
+  </div>
+  <div class="kpi-card k-inv">
+    <div class="kpi-icon">💰</div>
+    <div class="kpi-val" id="kpi-inv">S/ 137K</div>
+    <div class="kpi-label">Inversión Total (S/)</div>
+    <div class="kpi-trend">2023–2026</div>
+    <div class="kpi-bg-icon">💰</div>
+  </div>
+  <div class="kpi-card k-nota">
+    <div class="kpi-icon">⭐</div>
+    <div class="kpi-val" id="kpi-nota">93.8</div>
+    <div class="kpi-label">Nota Promedio Obtenida</div>
+    <div class="kpi-trend">↑ Mejora sostenida</div>
+    <div class="kpi-bg-icon">⭐</div>
+  </div>
+  <div class="kpi-card k-fin">
+    <div class="kpi-icon">✅</div>
+    <div class="kpi-val" id="kpi-fin">148</div>
+    <div class="kpi-label">Finalizados</div>
+    <div class="kpi-trend">88.6% tasa de éxito</div>
+    <div class="kpi-bg-icon">✅</div>
+  </div>
+  <div class="kpi-card k-proc">
+    <div class="kpi-icon">🔄</div>
+    <div class="kpi-val" id="kpi-proc">19</div>
+    <div class="kpi-label">En Proceso</div>
+    <div class="kpi-trend">11.4% en curso</div>
+    <div class="kpi-bg-icon">🔄</div>
+  </div>
+  <div class="kpi-card k-prov">
+    <div class="kpi-icon">🏢</div>
+    <div class="kpi-val" id="kpi-prov">12+</div>
+    <div class="kpi-label">Proveedores Activos</div>
+    <div class="kpi-trend">HODELPE lidera</div>
+    <div class="kpi-bg-icon">🏢</div>
+  </div>
+</div>
+
+<!-- ROW 1: Tendencia anual + Inversión por mes -->
+<div id="sec-financiero" style="display:none">
+<div class="section-title"><span class="stag">01</span> Evolución Anual & Inversión</div>
+<div class="row2">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Homologaciones por Año & Mes</div>
+    <div class="chart-wrap tall">
+      <canvas id="chartAnual"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--gold)"></span>Inversión Anual (S/)</div>
+    <div class="chart-wrap tall">
+      <canvas id="chartInversion"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2: Proveedor + Clientes ranking -->
+<div class="section-title"><span class="stag">02</span> Proveedores & Clientes</div>
+<div class="row4">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Proveedores Homologadores · Ranking por Uso & Inversión</div>
+    <table class="prov-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Casa Homologadora</th>
+          <th>Casos</th>
+          <th>Inversión (S/)</th>
+          <th>Costo Prom.</th>
+          <th>Participación</th>
+        </tr>
+      </thead>
+      <tbody id="prov-tbody"></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Distribución por Proveedor</div>
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="chartProv"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3: Clientes que más piden -->
+</div><!-- /sec-financiero -->
+
+<div class="section-title"><span class="stag">03</span> Clientes con Mayor Demanda de Homologaciones</div>
+<div class="row2">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Top 10 Clientes · Mayor Número de Solicitudes</div>
+    <div id="rank-clientes" class="rank-list" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Actividad por Responsable LIDERMAN</div>
+    <div id="resp-list" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- ROW 4: Nota obtenida + Hallazgos -->
+<div id="sec-calidad" style="display:none">
+<div class="section-title"><span class="stag">04</span> Calidad · Notas Obtenidas & Hallazgos</div>
+<div class="row3">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--teal)"></span>Nota Promedio por Año</div>
+    <div class="chart-wrap">
+      <canvas id="chartNota"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Distribución de Notas</div>
+    <div class="gauge-wrap">
+      <div class="kpi-val" style="color:var(--teal);font-family:'Bebas Neue';font-size:56px">93.8</div>
+      <div class="kpi-label">Nota Final Promedio</div>
+    </div>
+    <div class="score-bars">
+      <div class="score-bar-row">
+        <span class="sbl">≥95</span>
+        <div class="sbt"><div class="sbf" style="width:48%;background:var(--teal)"></div></div>
+        <span class="sbv">~48%</span>
+      </div>
+      <div class="score-bar-row">
+        <span class="sbl">90-95</span>
+        <div class="sbt"><div class="sbf" style="width:31%;background:var(--green)"></div></div>
+        <span class="sbv">~31%</span>
+      </div>
+      <div class="score-bar-row">
+        <span class="sbl">80-90</span>
+        <div class="sbt"><div class="sbf" style="width:16%;background:var(--gold)"></div></div>
+        <span class="sbv">~16%</span>
+      </div>
+      <div class="score-bar-row">
+        <span class="sbl">&lt;80</span>
+        <div class="sbt"><div class="sbf" style="width:5%;background:var(--accent)"></div></div>
+        <span class="sbv">~5%</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Hallazgos Negativos por Ámbito</div>
+    <div id="hallazgos-list"></div>
+  </div>
+</div>
+
+<!-- ROW 5: Nuevos clientes -->
+</div><!-- /sec-calidad -->
+
+<div class="section-title"><span class="stag">05</span> Nuevos Clientes Incorporados</div>
+<div class="row4">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--teal)"></span>Clientes Nuevos 2024-2026 · Expansión del Portafolio <span style="background:rgba(6,214,160,0.15);color:var(--teal);padding:2px 10px;border-radius:10px;font-size:11px;margin-left:8px">38 nuevos clientes</span></div>
+    <div class="new-clients-grid" id="new-clients-grid"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Crecimiento Portafolio de Clientes</div>
+    <div class="chart-wrap">
+      <canvas id="chartClientes"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 6: Últimas actividades -->
+<div class="section-title"><span class="stag">06</span> Actividad Reciente & Estado de Procesos</div>
+<div class="row2">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--green)"></span>Últimas Homologaciones Registradas</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Estado por Responsable · 2025</div>
+    <div class="chart-wrap">
+      <canvas id="chartResp"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 7: GANTT DE DEMORAS -->
+<div class="section-title"><span class="stag">07</span> Gantt · Tiempos de Demora por Área en el Proceso de Pago</div>
+<div class="card" style="margin-bottom:24px">
+  <div class="card-title"><span class="dot" style="background:var(--gold)"></span>Mapa de Tiempos Promedio · Proceso Completo de Homologación & Pago</div>
+  
+  <!-- GANTT SUMMARY CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+    <div style="background:rgba(232,52,58,0.08);border:1px solid rgba(232,52,58,0.2);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:20px">🏢</div>
+      <div style="font-family:'Bebas Neue';font-size:28px;color:var(--accent)">3 sem</div>
+      <div style="font-size:11px;color:var(--muted)">Logística / Contabilidad / Tesorería</div>
+    </div>
+    <div style="background:rgba(245,197,24,0.08);border:1px solid rgba(245,197,24,0.2);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:20px">🗂️</div>
+      <div style="font-family:'Bebas Neue';font-size:28px;color:var(--gold)">3 sem</div>
+      <div style="font-size:11px;color:var(--muted)">Operaciones · Líderes Zonales (Folder LIDERMAN)</div>
+    </div>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:20px">🏛️</div>
+      <div style="font-family:'Bebas Neue';font-size:28px;color:var(--blue)">2 sem</div>
+      <div style="font-size:11px;color:var(--muted)">Casa Homologadora · Respuesta & Auditoría</div>
+    </div>
+    <div style="background:rgba(6,214,160,0.08);border:1px solid rgba(6,214,160,0.2);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:20px">📅</div>
+      <div style="font-family:'Bebas Neue';font-size:28px;color:var(--teal)">~11</div>
+      <div style="font-size:11px;color:var(--muted)">Semanas totales promedio por proceso</div>
+    </div>
+    <div style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:20px">⚡</div>
+      <div style="font-family:'Bebas Neue';font-size:28px;color:var(--purple)">3+ meses</div>
+      <div style="font-size:11px;color:var(--muted)">Tiempo total proceso completo</div>
+    </div>
+  </div>
+
+  <!-- GANTT CHART -->
+  <div class="gantt-container">
+    <!-- HEADER -->
+    <div style="display:flex;align-items:center;margin-bottom:4px">
+      <div style="width:220px;flex-shrink:0;padding:0 12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Área / Responsable</div>
+      <div style="flex:1;display:grid;grid-template-columns:repeat(11,1fr)">
+        <div class="week-label">Sem 1</div>
+        <div class="week-label">Sem 2</div>
+        <div class="week-label">Sem 3</div>
+        <div class="week-label">Sem 4</div>
+        <div class="week-label">Sem 5</div>
+        <div class="week-label">Sem 6</div>
+        <div class="week-label">Sem 7</div>
+        <div class="week-label">Sem 8</div>
+        <div class="week-label">Sem 9</div>
+        <div class="week-label">Sem 10</div>
+        <div class="week-label">Sem 11</div>
+      </div>
+    </div>
+
+    <!-- FASES -->
+    <div id="gantt-rows"></div>
+
+    <!-- TOTAL LINE -->
+    <div class="gantt-total-bar" style="margin-top:16px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">⏱ Proceso Total Estimado</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Desde inicio de trámite hasta emisión de certificado y pago al proveedor</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="text-align:right">
+          <div style="font-family:'Bebas Neue';font-size:36px;color:var(--gold)">~11 Semanas</div>
+          <div style="font-size:11px;color:var(--muted)">≈ 3 meses calendario</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRITICAL PATH NOTE -->
+    <div style="margin-top:12px;padding:12px 16px;background:rgba(232,52,58,0.06);border:1px solid rgba(232,52,58,0.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--accent)">⚠ Puntos críticos identificados:</strong> Las áreas de <strong style="color:var(--accent)">Logística, Contabilidad y Tesorería</strong> acumulan demoras en la aprobación del pago (~3 semanas en total). Los <strong style="color:var(--gold)">Líderes Zonales de Operaciones</strong> demoran en entregar el Folder LIDERMAN (~3 semanas). La <strong style="color:var(--blue)">Casa Homologadora</strong> tarda en coordinar y ejecutar la visita de auditoría (~2 semanas).
+      <br><strong style="color:var(--teal)">💡 Recomendación SGI:</strong> Implementar alertas automáticas a los 5 días de cada etapa sin movimiento. Esto podría reducir el ciclo total en un 30-40%.
+    </div>
+
+    <!-- LEGEND -->
+    <div class="gantt-legend" style="margin-top:14px">
+      <div class="gl-item"><div class="gl-box" style="background:rgba(232,52,58,0.7)"></div>Logística / Contabilidad / Tesorería</div>
+      <div class="gl-item"><div class="gl-box" style="background:rgba(245,197,24,0.7)"></div>Operaciones / Campo</div>
+      <div class="gl-item"><div class="gl-box" style="background:rgba(59,130,246,0.7)"></div>Casa Homologadora</div>
+      <div class="gl-item"><div class="gl-box" style="background:rgba(167,139,250,0.7)"></div>Proceso compartido</div>
+      <div class="gl-item"><div class="gl-box" style="background:rgba(255,255,255,0.08);border:1px dashed rgba(255,255,255,0.2)"></div>Tiempo de espera</div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  Dashboard de Homologaciones · <span>SGI LIDERMAN</span> · Datos 2023–2026 · Sincronizado con Google Sheets en tiempo real · Uso interno - Gerencia
+</footer>
+
+<script>
+
+const GS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREnBoAWKU4GTEX-N3sVur_mZt6ah8BeBY6HnZ-8fGAgYWJCQWZlna2Eh-ymHwVxHEwFFSisgWUAzQV/pub?gid=0&single=true&output=csv';
+
+/* ── DATA STORE ── */
+const D = {
+  anual:   { labels:['2023','2024','2025','2026'], count:[47,42,56,19], costo:[36962,35042,52735,12521] },
+  mensual: { labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'],
+             2023:[3,3,1,2,2,1,5,4,6,9,8,3], 2024:[4,1,3,6,6,2,2,7,6,1,2,2], 2025:[9,7,4,1,2,4,4,5,5,4,6,5] },
+  notas:   { labels:['2023','2024','2025','2026'], final:[92.73,93.57,94.95,100.0] },
+  proveedores:[
+    {name:'HODELPE',casos:54,inversion:29634},{name:'MEGA',casos:25,inversion:21433},
+    {name:'SGS',casos:19,inversion:19184},{name:'BUREAU VERITAS',casos:16,inversion:18860},
+    {name:'CIAL Dun & Bradstreet',casos:15,inversion:17377},{name:'ICONTEC',casos:8,inversion:8557},
+    {name:'IASAC',casos:5,inversion:3200},{name:'Aquiles Peru',casos:2,inversion:5334},
+    {name:'Otros',casos:23,inversion:13572}
+  ],
+  clientes:[
+    {name:'GRUPO ROMERO',count:8},{name:'IMPALA TERMINALS PERU',count:6},
+    {name:'ANTAMINA',count:5},{name:'ENTEL',count:4},{name:'BBVA',count:4},
+    {name:'BCP',count:3},{name:'TASA',count:3},{name:'PETROPERÚ',count:3},
+    {name:'MARCOBRE',count:3},{name:'MOLITALIA',count:3}
+  ],
+  responsables:[
+    {name:'Valeria V.',count:70,color:'#a78bfa'},{name:'Lucia H.',count:34,color:'#3b82f6'},
+    {name:'Erick A.',count:27,color:'#06d6a0'},{name:'Richard L.',count:19,color:'#f5c518'},
+    {name:'Gerson G.',count:11,color:'#ff6b35'},{name:'David D.',count:5,color:'#e8343a'}
+  ],
+  hallazgos:[
+    {name:'Finanzas',val:33,color:'#e8343a'},{name:'SSOMA',val:12,color:'#f97316'},
+    {name:'Operaciones',val:10,color:'#f5c518'},{name:'GAT',val:8,color:'#a78bfa'},
+    {name:'Legal',val:7,color:'#3b82f6'},{name:'Resp. Social',val:6,color:'#06d6a0'},
+    {name:'Logistica',val:4,color:'#22d3ee'},{name:'Calidad',val:4,color:'#10b981'},
+    {name:'Comercial',val:4,color:'#c084fc'},{name:'Admin',val:2,color:'#60a5fa'}
+  ],
+  nuevosClientes:[
+    {name:'ACEROS AREQUIPA',year:'2025'},{name:'AJINOMOTO',year:'2025'},
+    {name:'ALICORP',year:'2025'},{name:'ANGLO AMERICAN QUELLAVECO',year:'2025'},
+    {name:'ANTAPACCAY',year:'2025'},{name:'AEROPUERTOS ANDINOS',year:'2025'},
+    {name:'BANBIF',year:'2024'},{name:'CARVAJAL EMPAQUES',year:'2025'},
+    {name:'CIA MINERA SANTA LUISA',year:'2025'},{name:'COUNTRY CLUB VILLA',year:'2025'},
+    {name:'DIVEMOTOR',year:'2024'},{name:'GLORIA',year:'2024'},
+    {name:'GRUPO EDUCA',year:'2025'},{name:'GRUPO GILDEMEISTER',year:'2025'},
+    {name:'GRUPO GLORIA II',year:'2025'},{name:'GRUPO SILVESTRE',year:'2025'},
+    {name:'GSP SERVICIOS GENERALES',year:'2024'},{name:'HERMES TRANSPORTES',year:'2024'},
+    {name:'INTERBANK',year:'2025'},{name:'LAS BAMBAS',year:'2024'},
+    {name:'LINDE PERU',year:'2025'},{name:'LindCorp',year:'2025'},
+    {name:'MIBANCO',year:'2025'},{name:'MINAS BUENAVENTURA',year:'2025'},
+    {name:'METSO',year:'2025'},{name:'PAMOLSA',year:'2024'},
+    {name:'PESQUERA DIAMANTE',year:'2025'},{name:'PACIFICO SEGUROS',year:'2025'},
+    {name:'PRIMAX',year:'2025'},{name:'PSA MARINE PERU',year:'2025'},
+    {name:'SAN FERNANDO S.A.',year:'2024'},{name:'SOLGAS',year:'2025'},
+    {name:'STATKRAFT PERU SA',year:'2024'},{name:'URBANOVA',year:'2024'},
+    {name:'VISUAL IMPACT',year:'2025'},{name:'VOLCAN COMPANIA MINERA',year:'2024'},
+    {name:'CORP. ACEROS AREQUIPA',year:'2025'},{name:'CORP. MONTE AZUL',year:'2025'}
+  ],
+  timeline:[
+    {date:'2026-01',client:'ANTAPACCAY',nota:100,status:'fin',prov:'HODELPE'},
+    {date:'2026-01',client:'MARCOBRE',nota:100,status:'fin',prov:'BUREAU VERITAS'},
+    {date:'2026-01',client:'LindCorp',nota:null,status:'proc',prov:'SGS'},
+    {date:'2025-12',client:'GRUPO ROMERO',nota:99,status:'fin',prov:'HODELPE'},
+    {date:'2025-12',client:'ENTEL',nota:97,status:'fin',prov:'MEGA'},
+    {date:'2025-11',client:'IMPALA TERMINALS',nota:95,status:'fin',prov:'CIAL'},
+    {date:'2025-11',client:'MINAS BUENAVENTURA',nota:92,status:'fin',prov:'SGS'},
+    {date:'2025-10',client:'PRIMAX',nota:98,status:'fin',prov:'HODELPE'},
+    {date:'2025-09',client:'STATKRAFT PERU SA',nota:94,status:'fin',prov:'ICONTEC'},
+    {date:'2025-08',client:'LAS BAMBAS',nota:91,status:'fin',prov:'BUREAU VERITAS'}
+  ]
+};
+
+/* ── GANTT ── */
+const GP=[
+  {area:'Operaciones / Lideres Zonales',dept:'Folder LIDERMAN - Informacion de campo',start:0,weeks:3,color:'rgba(245,197,24,0.75)',label:'3 semanas demora',critical:true},
+  {area:'Casa Homologadora',dept:'Respuesta, coordinacion y visita auditoria',start:3,weeks:2,color:'rgba(59,130,246,0.75)',label:'2 semanas demora',critical:true},
+  {area:'Casa Homologadora',dept:'Revision documentaria - Emision informe',start:5,weeks:1,color:'rgba(167,139,250,0.75)',label:'Informe y Calificacion',critical:false},
+  {area:'Logistica',dept:'Recepcion factura - Validacion y registro',start:6,weeks:1,color:'rgba(232,52,58,0.5)',label:'Recepcion y Registro',critical:false},
+  {area:'Contabilidad',dept:'Revision contable - Aprobacion de pago',start:7,weeks:1,color:'rgba(232,52,58,0.65)',label:'Aprobacion contable',critical:false},
+  {area:'Tesoreria',dept:'Programacion y ejecucion del pago',start:8,weeks:1,color:'rgba(232,52,58,0.8)',label:'Pago al proveedor',critical:false},
+  {area:'Logistica / Contabilidad / Tesoreria',dept:'Tiempo total acumulado proceso de pago',start:6,weeks:3,color:'rgba(232,52,58,0.18)',label:'3 semanas - proceso pago',critical:true}
+];
+
+/* ── HELPERS ── */
+function animN(el,target){
+  if(!el)return;
+  const dur=700,t0=performance.now();
+  (function f(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(e*target).toLocaleString('es-PE');
+    if(p<1)requestAnimationFrame(f);
+  })(performance.now());
+}
+
+function showToast(icon,msg){
+  let t=document.getElementById('_toast');
+  if(!t){
+    t=document.createElement('div');t.id='_toast';t.className='toast';
+    t.innerHTML='<span id="_ti"></span> <span id="_tm"></span>';
+    document.body.appendChild(t);
+  }
+  document.getElementById('_ti').textContent=icon;
+  document.getElementById('_tm').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function setSyncStatus(ok,msg){
+  ['sync-dot','sync-dot2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.className='sync-dot '+(ok?'synced':'pending');
+  });
+  ['sync-label','sync-label2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=msg;
+  });
+}
+
+/* ── CSV PARSER ── */
+function parseCSV(txt){
+  const rows=[];
+  const lines=txt.trim().split('\n');
+  if(lines.length<3)return rows;
+  const hdrs=lines[1].split(',').map(h=>h.replace(/"/g,'').trim());
+  for(let i=2;i<lines.length;i++){
+    const vals=[];let cur='',inq=false;
+    for(const ch of lines[i]){
+      if(ch==='"'){inq=!inq;}
+      else if(ch===','&&!inq){vals.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    vals.push(cur.trim());
+    const obj={};
+    hdrs.forEach((h,j)=>obj[h]=vals[j]||'');
+    if(obj['ITEM']&&/^\d/.test(obj['ITEM']))rows.push(obj);
+  }
+  return rows;
+}
+
+/* ── RECALC FROM SHEETS ROWS ── */
+function recalcFromRows(rows){
+  const MM={enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,setiembre:8,septiembre:8,octubre:9,noviembre:10,diciembre:11};
+  const by={};
+  rows.forEach(r=>{
+    const y=parseInt(r['AÑO']||r['ANO']||'');
+    if(!y||y<2020||y>2030)return;
+    if(!by[y])by[y]={n:0,costo:0,notas:[],mes:Array(12).fill(0)};
+    by[y].n++;
+    const c=parseFloat((r['COSTO']||'').replace(/[^0-9.]/g,''));
+    if(!isNaN(c))by[y].costo+=c;
+    const nota=parseFloat(r['NOTA FINAL']||r['NOTA OBTENIDA']||'');
+    if(!isNaN(nota)&&nota>0)by[y].notas.push(nota);
+    const mi=MM[(r['MES']||'').toLowerCase().trim()];
+    if(mi!==undefined)by[y].mes[mi]++;
+  });
+  const yrs=[2023,2024,2025,2026].filter(y=>by[y]);
+  if(yrs.length){
+    D.anual.labels=yrs.map(String);
+    D.anual.count=yrs.map(y=>by[y].n);
+    D.anual.costo=yrs.map(y=>Math.round(by[y].costo));
+    D.notas.labels=yrs.map(String);
+    D.notas.final=yrs.map(y=>{
+      const ns=by[y].notas;
+      return ns.length?Math.round(ns.reduce((a,b)=>a+b)/ns.length*100)/100:0;
+    });
+    [2023,2024,2025].forEach(y=>{if(by[y])D.mensual[y]=by[y].mes;});
+  }
+  // clientes
+  const cc={};rows.forEach(r=>{const cl=(r['CLIENTE']||'').trim();if(cl)cc[cl]=(cc[cl]||0)+1;});
+  const tc=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(tc.length)D.clientes=tc.map(([name,count])=>({name,count}));
+  // proveedores
+  const pp={};rows.forEach(r=>{const p=(r['CASA HOMOLOGADORA']||'').trim();if(!p)return;if(!pp[p])pp[p]={n:0,inv:0};pp[p].n++;const c=parseFloat((r['COSTO']||'').replace(/[^0-9.]/g,''));if(!isNaN(c))pp[p].inv+=c;});
+  const tp=Object.entries(pp).sort((a,b)=>b[1].n-a[1].n).slice(0,9);
+  if(tp.length)D.proveedores=tp.map(([name,v])=>({name,casos:v.n,inversion:Math.round(v.inv)}));
+  // responsables
+  const rr={};rows.forEach(r=>{const rp=(r['RESPONSABLE']||'').trim();if(rp)rr[rp]=(rr[rp]||0)+1;});
+  const tr=Object.entries(rr).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const RC2=['#a78bfa','#3b82f6','#06d6a0','#f5c518','#ff6b35','#e8343a'];
+  if(tr.length)D.responsables=tr.map(([name,count],i)=>({name,count,color:RC2[i]}));
+  // timeline
+  const tl=rows.slice(-10).reverse().map(r=>({
+    date:(r['AÑO']||'?')+'-'+(r['MES']||'').substring(0,3),
+    client:(r['CLIENTE']||'').substring(0,22),
+    nota:parseFloat(r['NOTA FINAL'])||null,
+    status:(r['STATUS']||'').toLowerCase().includes('fin')?'fin':'proc',
+    prov:(r['CASA HOMOLOGADORA']||'').substring(0,12)
+  }));
+  if(tl.length)D.timeline=tl;
+  // nuevos clientes
+  const c23=new Set(rows.filter(r=>parseInt(r['AÑO'])===2023).map(r=>(r['CLIENTE']||'').trim().toUpperCase()));
+  const nv=[];const sv=new Set();
+  rows.filter(r=>parseInt(r['AÑO'])>=2024).forEach(r=>{
+    const cl=(r['CLIENTE']||'').trim(),k=cl.toUpperCase();
+    if(cl&&!c23.has(k)&&!sv.has(k)){sv.add(k);nv.push({name:cl,year:String(r['AÑO'])});}
+  });
+  if(nv.length)D.nuevosClientes=nv;
+  const total=rows.length;
+  const fin=rows.filter(r=>(r['STATUS']||'').toLowerCase().includes('fin')).length;
+  const allN=rows.map(r=>parseFloat(r['NOTA FINAL']||r['NOTA OBTENIDA']||'')).filter(n=>!isNaN(n)&&n>0);
+  const notaProm=allN.length?(allN.reduce((a,b)=>a+b)/allN.length).toFixed(1):'93.8';
+  const totalInv=rows.reduce((s,r)=>{const c=parseFloat((r['COSTO']||'').replace(/[^0-9.]/g,''));return s+(isNaN(c)?0:c);},0);
+  return {total,fin,proc:total-fin,notaProm,totalInv};
+}
+
+/* ── CHARTS store ── */
+let CH={};
+
+/* ── RENDER ALL ── */
+function renderAll(kpis){
+  // KPI numbers
+  const ids={total:'kpi-total',fin:'kpi-fin',proc:'kpi-proc'};
+  document.getElementById('kpi-nota').textContent=kpis.notaProm;
+  document.getElementById('kpi-inv').textContent='S/ '+Math.round(kpis.totalInv/1000)+'K';
+  setTimeout(()=>{
+    animN(document.getElementById('kpi-total'),kpis.total);
+    animN(document.getElementById('kpi-fin'),kpis.fin);
+    animN(document.getElementById('kpi-proc'),kpis.proc);
+  },200);
+
+  // destroy old charts
+  Object.values(CH).forEach(c=>{try{c.destroy();}catch(e){}});CH={};
+
+  // ---- chart: mensual ----
+  CH.anual=new Chart(document.getElementById('chartAnual'),{
+    type:'bar',
+    data:{labels:D.mensual.labels,datasets:[
+      {label:'2023',data:D.mensual[2023]||[],backgroundColor:'rgba(232,52,58,0.6)',borderRadius:4},
+      {label:'2024',data:D.mensual[2024]||[],backgroundColor:'rgba(59,130,246,0.6)',borderRadius:4},
+      {label:'2025',data:D.mensual[2025]||[],backgroundColor:'rgba(6,214,160,0.7)',borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#6b7cb3',font:{size:11}}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#6b7cb3'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7cb3'}}}}
+  });
+
+  // ---- chart: inversion ----
+  CH.inv=new Chart(document.getElementById('chartInversion'),{
+    type:'bar',
+    data:{labels:D.anual.labels,datasets:[{
+      label:'Inversion (S/)',data:D.anual.costo,
+      backgroundColor:['rgba(232,52,58,0.7)','rgba(59,130,246,0.7)','rgba(6,214,160,0.7)','rgba(245,197,24,0.7)'],
+      borderRadius:8,borderSkipped:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'S/ '+c.raw.toLocaleString('es-PE',{minimumFractionDigits:0})}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#6b7cb3'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7cb3',callback:v=>'S/'+Math.round(v/1000)+'K'}}}}
+  });
+
+  // ---- chart: donut proveedores ----
+  CH.prov=new Chart(document.getElementById('chartProv'),{
+    type:'doughnut',
+    data:{labels:D.proveedores.slice(0,6).map(p=>p.name),datasets:[{
+      data:D.proveedores.slice(0,6).map(p=>p.casos),
+      backgroundColor:['#e8343a','#3b82f6','#06d6a0','#a78bfa','#f5c518','#ff6b35'],
+      borderWidth:2,borderColor:'#0c1128',hoverOffset:6
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{position:'right',labels:{color:'#6b7cb3',font:{size:11},boxWidth:10,padding:8}}}}
+  });
+
+  // ---- tabla proveedores ----
+  const tCasos=D.proveedores.reduce((s,p)=>s+p.casos,0);
+  const tb=document.getElementById('prov-tbody');tb.innerHTML='';
+  D.proveedores.slice(0,8).forEach((p,i)=>{
+    const pct=(p.casos/tCasos*100).toFixed(1);
+    const rn=i===0?'g1':i===1?'g2':i===2?'g3':'gn';
+    tb.innerHTML+=`<tr>
+      <td><span class="rn ${rn}">${i+1}</span></td>
+      <td style="font-weight:600">${p.name}</td>
+      <td><span class="badge badge-blue">${p.casos}</span></td>
+      <td style="font-family:'Space Mono';font-size:13px;color:var(--gold)">S/ ${p.inversion.toLocaleString('es-PE',{minimumFractionDigits:0})}</td>
+      <td style="color:var(--muted);font-size:12px">S/ ${Math.round(p.inversion/Math.max(p.casos,1)).toLocaleString()}</td>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div style="width:60px;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">${pct}%</span>
+      </div></td>
+    </tr>`;
+  });
+
+  // ---- ranking clientes ----
+  const RCLR=['#e8343a','#ff6b35','#f5c518','#06d6a0','#3b82f6','#a78bfa','#22d3ee','#10b981','#c084fc','#60a5fa'];
+  const mxC=D.clientes[0]?.count||1;
+  const rdiv=document.getElementById('rank-clientes');rdiv.innerHTML='';
+  D.clientes.forEach((c,i)=>{
+    const rn=i===0?'g1':i===1?'g2':i===2?'g3':'gn';
+    rdiv.innerHTML+=`<div class="rank-item">
+      <div class="rn ${rn}">${i+1}</div>
+      <div class="ri">
+        <div class="ri-name">${c.name}</div>
+        <div class="rank-bar-row">
+          <div class="rank-track"><div class="rank-fill" style="width:${c.count/mxC*100}%;background:${RCLR[i]}"></div></div>
+          <div class="rank-val">${c.count}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // ---- responsables ----
+  const mxR=D.responsables[0]?.count||1;
+  const rsdiv=document.getElementById('resp-list');rsdiv.innerHTML='';
+  D.responsables.forEach(r=>{
+    const ini=r.name.split(' ').map(x=>x[0]).join('');
+    rsdiv.innerHTML+=`<div class="resp-item">
+      <div class="resp-avatar" style="background:${r.color}22;color:${r.color};border:2px solid ${r.color}44">${ini}</div>
+      <div class="resp-info">
+        <div class="resp-name">${r.name}</div>
+        <div class="resp-count">${r.count} homologaciones</div>
+        <div class="resp-bar" style="width:${r.count/mxR*100}%;background:${r.color}66;margin-top:4px"></div>
+      </div>
+      <div style="font-family:'Space Mono';font-size:16px;font-weight:700;color:${r.color}">${r.count}</div>
+    </div>`;
+  });
+
+  // ---- chart: notas ----
+  CH.nota=new Chart(document.getElementById('chartNota'),{
+    type:'line',
+    data:{labels:D.notas.labels,datasets:[{
+      label:'Nota Final Promedio',data:D.notas.final,
+      borderColor:'#06d6a0',backgroundColor:'rgba(6,214,160,0.1)',
+      tension:0.4,fill:true,pointBackgroundColor:'#06d6a0',pointRadius:6,pointHoverRadius:9,borderWidth:3
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(2)+' pts'}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#6b7cb3'}},
+              y:{min:85,max:102,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7cb3',callback:v=>v+' pts'}}}}
+  });
+
+  // ---- hallazgos ----
+  const mxH=D.hallazgos[0]?.val||1;
+  const hdiv=document.getElementById('hallazgos-list');hdiv.innerHTML='';
+  D.hallazgos.forEach(h=>{
+    hdiv.innerHTML+=`<div class="hallazgo-item">
+      <span class="haj-label">${h.name}</span>
+      <div class="haj-track"><div class="haj-fill" style="width:${h.val/mxH*100}%;background:${h.color}88"></div></div>
+      <span class="haj-val" style="color:${h.color}">${h.val}</span>
+    </div>`;
+  });
+
+  // ---- nuevos clientes ----
+  const ngrid=document.getElementById('new-clients-grid');ngrid.innerHTML='';
+  D.nuevosClientes.sort((a,b)=>b.year-a.year).forEach(c=>{
+    const yc=c.year==='2026'?'var(--accent)':c.year==='2025'?'var(--teal)':'var(--blue)';
+    const bg=c.year==='2026'?'rgba(232,52,58,0.06)':c.year==='2025'?'rgba(6,214,160,0.06)':'rgba(59,130,246,0.06)';
+    const bc=c.year==='2026'?'rgba(232,52,58,0.15)':c.year==='2025'?'rgba(6,214,160,0.15)':'rgba(59,130,246,0.15)';
+    ngrid.innerHTML+=`<div class="nc-item" style="background:${bg};border-color:${bc}">
+      <span class="nc-year" style="color:${yc}">${c.year}</span>
+      <span class="nc-name">${c.name}</span>
+    </div>`;
+  });
+
+  // ---- chart: clientes ----
+  CH.cl=new Chart(document.getElementById('chartClientes'),{
+    type:'line',
+    data:{labels:['2022','2023','2024','2025','2026'],datasets:[{
+      label:'Clientes',data:[8,20,42,75,85],
+      borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',
+      tension:0.4,fill:true,pointBackgroundColor:'#3b82f6',pointRadius:5,borderWidth:3
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#6b7cb3'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7cb3'}}}}
+  });
+
+  // ---- timeline ----
+  const tldiv=document.getElementById('timeline');tldiv.innerHTML='';
+  D.timeline.forEach(t=>{
+    const nota=t.nota?`<div class="tl-nota">${t.nota}</div>`:`<div class="tl-nota" style="color:var(--blue)">EP</div>`;
+    tldiv.innerHTML+=`<div class="tl-item ${t.status}">
+      <div><div class="tl-date">${t.date}</div><div class="tl-date" style="margin-top:2px">${t.prov}</div></div>
+      <div class="tl-info">
+        <div class="tl-client">${t.client}</div>
+        <div class="tl-detail">${t.status==='fin'?'Finalizado':'En Proceso'}</div>
+      </div>
+      ${nota}
+    </div>`;
+  });
+
+  // ---- chart: responsables ----
+  CH.resp=new Chart(document.getElementById('chartResp'),{
+    type:'bar',
+    data:{labels:D.responsables.map(r=>r.name),datasets:[{
+      label:'Homologaciones',data:D.responsables.map(r=>r.count),
+      backgroundColor:D.responsables.map(r=>r.color+'99'),
+      borderColor:D.responsables.map(r=>r.color),
+      borderWidth:2,borderRadius:6,borderSkipped:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7cb3'}},
+              y:{grid:{display:false},ticks:{color:'#6b7cb3',font:{size:12}}}}}
+  });
+}
+
+/* ── GOOGLE SHEETS SYNC ── */
+async function loadFromGoogleSheets(){
+  setSyncStatus(false,'Conectando...');
+  try{
+    const r=await fetch(GS);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const txt=await r.text();
+    if(!txt||txt.length<100||txt.includes('Host not'))throw new Error('Sin datos');
+    const rows=parseCSV(txt);
+    if(!rows.length)throw new Error('CSV vacio');
+    const kpis=recalcFromRows(rows);
+    renderAll(kpis);
+    const h=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+    setSyncStatus(true,'Google Sheets - '+h);
+    showToast('🟢','Actualizado ('+rows.length+' registros)');
+    try{localStorage.setItem('gs_bk',JSON.stringify({D:JSON.parse(JSON.stringify(D)),ts:Date.now(),kpis}));}catch(e){}
+  }catch(err){
+    console.warn('Sheets error:',err.message);
+    try{
+      const bk=JSON.parse(localStorage.getItem('gs_bk')||'null');
+      if(bk){
+        Object.assign(D,bk.D);
+        renderAll(bk.kpis);
+        const min=Math.round((Date.now()-bk.ts)/60000);
+        setSyncStatus(false,'Cache local - hace '+min+' min');
+        showToast('🟡','Usando cache (hace '+min+' min)');
+        return;
+      }
+    }catch(e2){}
+    renderAll({total:167,fin:148,proc:19,notaProm:'93.8',totalInv:137261});
+    setSyncStatus(false,'Datos base - sin conexion');
+  }
+}
+
+function manualSync(){loadFromGoogleSheets();}
+setInterval(loadFromGoogleSheets,5*60*1000);
+
+/* ── FILTER BUTTONS — con actualización real de gráficos ── */
+let activeYear = 'todos';
+let activeView = 'general';
+
+function setYear(yr){
+  activeYear = yr;
+  // Resaltar botón activo
+  document.querySelectorAll('.fbtn').forEach(b=>{
+    const oc = b.getAttribute('onclick')||'';
+    if(oc.includes('setYear')) b.classList.remove('active-year');
+  });
+  if(event&&event.currentTarget) event.currentTarget.classList.add('active-year');
+  applyFilters();
+}
+
+function setView(v){
+  activeView = v;
+  document.querySelectorAll('.fbtn').forEach(b=>{
+    const oc = b.getAttribute('onclick')||'';
+    if(oc.includes('setView')) b.classList.remove('active-prov');
+  });
+  if(event&&event.currentTarget) event.currentTarget.classList.add('active-prov');
+  applyFilters();
+}
+
+function applyFilters(){
+  // ── Filtrar datos por año ──
+  let labels, counts, costos, notasFinal;
+
+  if(activeYear === 'todos'){
+    labels     = D.anual.labels;
+    counts     = D.anual.count;
+    costos     = D.anual.costo;
+    notasFinal = D.notas.final;
+  } else {
+    const idx = D.anual.labels.indexOf(String(activeYear));
+    if(idx === -1){ showToast('⚠','Sin datos para ese año'); return; }
+    labels     = [D.anual.labels[idx]];
+    counts     = [D.anual.count[idx]];
+    costos     = [D.anual.costo[idx]];
+    notasFinal = [D.notas.final[idx]];
+  }
+
+  // ── Actualizar KPIs ──
+  const total = counts.reduce((a,b)=>a+b,0);
+  const inv   = costos.reduce((a,b)=>a+b,0);
+  const nota  = notasFinal.length
+    ? (notasFinal.reduce((a,b)=>a+b,0)/notasFinal.length).toFixed(1)
+    : '—';
+  document.getElementById('kpi-total').textContent = total.toLocaleString('es-PE');
+  document.getElementById('kpi-inv').textContent   = 'S/ '+Math.round(inv/1000)+'K';
+  document.getElementById('kpi-nota').textContent  = nota;
+
+  // ── Mensual: filtrar por año seleccionado ──
+  let mensualDatasets;
+  if(activeYear === 'todos'){
+    mensualDatasets = [
+      {label:'2023',data:D.mensual[2023]||[],backgroundColor:'rgba(232,52,58,0.6)',borderRadius:4},
+      {label:'2024',data:D.mensual[2024]||[],backgroundColor:'rgba(59,130,246,0.6)',borderRadius:4},
+      {label:'2025',data:D.mensual[2025]||[],backgroundColor:'rgba(6,214,160,0.7)',borderRadius:4}
+    ];
+  } else {
+    const clr = {2023:'rgba(232,52,58,0.7)',2024:'rgba(59,130,246,0.7)',2025:'rgba(6,214,160,0.7)',2026:'rgba(245,197,24,0.7)'};
+    mensualDatasets = [{
+      label: String(activeYear),
+      data: D.mensual[activeYear] || Array(12).fill(0),
+      backgroundColor: clr[activeYear]||'rgba(167,139,250,0.7)',
+      borderRadius:4
+    }];
+  }
+  if(CH.anual){ CH.anual.data.datasets = mensualDatasets; CH.anual.update(); }
+
+  // ── Inversión anual — filtrado ──
+  if(CH.inv){
+    CH.inv.data.labels = labels;
+    CH.inv.data.datasets[0].data = costos;
+    CH.inv.update();
+  }
+
+  // ── Notas ──
+  if(CH.nota){
+    CH.nota.data.labels = labels;
+    CH.nota.data.datasets[0].data = notasFinal;
+    CH.nota.update();
+  }
+
+  // ── Vista: General / Financiero / Calidad ──
+  const secFinanciero = document.getElementById('sec-financiero');
+  const secCalidad    = document.getElementById('sec-calidad');
+  const secGeneral    = document.getElementById('sec-general');
+
+  if(activeView === 'financiero'){
+    if(secGeneral)    secGeneral.style.display   = 'none';
+    if(secCalidad)    secCalidad.style.display    = 'none';
+    if(secFinanciero) secFinanciero.style.display = '';
+    showToast('💰','Vista Financiero — inversión y proveedores');
+  } else if(activeView === 'calidad'){
+    if(secGeneral)    secGeneral.style.display    = 'none';
+    if(secFinanciero) secFinanciero.style.display = 'none';
+    if(secCalidad)    secCalidad.style.display    = '';
+    showToast('⭐','Vista Calidad — notas y hallazgos');
+  } else {
+    if(secFinanciero) secFinanciero.style.display = 'none';
+    if(secCalidad)    secCalidad.style.display    = 'none';
+    if(secGeneral)    secGeneral.style.display    = '';
+  }
+}
+
+/* ── GANTT ── */
+function buildGantt(){
+  const el=document.getElementById('gantt-rows');if(!el)return;
+  el.innerHTML='';
+  GP.forEach(p=>{
+    const ps=(p.start/11*100).toFixed(2),pw=(p.weeks/11*100).toFixed(2);
+    const cs=p.critical?`box-shadow:0 0 12px ${p.color};`:'';
+    el.innerHTML+=`<div class="gantt-row" style="margin-bottom:10px">
+      <div style="width:220px;flex-shrink:0;padding:0 12px">
+        <div style="font-size:13px;font-weight:600;color:${p.critical?'var(--text)':'var(--muted)'}">${p.area}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3">${p.dept}</div>
+      </div>
+      <div style="flex:1;position:relative;height:46px;background:rgba(255,255,255,0.02);border-radius:6px;overflow:hidden">
+        ${Array.from({length:10},(_,i)=>`<div style="position:absolute;top:0;bottom:0;left:${((i+1)/11*100).toFixed(1)}%;width:1px;background:rgba(255,255,255,0.04)"></div>`).join('')}
+        <div style="position:absolute;top:50%;transform:translateY(-50%);left:${ps}%;width:${pw}%;height:28px;background:${p.color};border-radius:6px;display:flex;align-items:center;padding:0 8px;${cs}min-width:8px">
+          <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.label}</span>
+        </div>
+      </div>
+      <div style="width:72px;flex-shrink:0;text-align:right;padding-right:4px">
+        <span style="font-family:'Space Mono';font-size:12px;font-weight:700;color:${p.critical?'var(--accent)':'var(--muted)'}">
+          ${p.weeks>=1?Math.round(p.weeks)+'s':'~4d'}
+        </span>
+        ${p.critical?'<div style="font-size:9px;color:var(--accent)">CRITICO</div>':''}
+      </div>
+    </div>`;
+  });
+}
+
+/* ── BACKUP ── */
+function doBackup(){
+  const bk={meta:{fecha:new Date().toISOString(),version:'3.0',fuente:'Google Sheets'},
+    kpis:{total:D.anual.count.reduce((a,b)=>a+b,0),inversion_total:D.anual.costo.reduce((a,b)=>a+b,0),nota_promedio:D.notas.final[D.notas.final.length-1]},
+    por_anio:{},clientes:D.clientes,proveedores:D.proveedores,responsables:D.responsables,
+    gantt:GP.map(p=>({area:p.area,semanas:p.weeks,critico:p.critical}))};
+  D.anual.labels.forEach((y,i)=>{bk.por_anio[y]={count:D.anual.count[i],inversion:D.anual.costo[i]};});
+  const blob=new Blob([JSON.stringify(bk,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='backup_homologaciones_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  showToast('💾','Backup descargado');
+}
+
+/* ── PDF EJECUTIVO ── */
+function generarPDFEjecutivo(){
+  showToast('📄','Generando PDF ejecutivo...');
+  const fecha=new Date().toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const fechaC=new Date().toISOString().slice(0,10);
+  const RED='#c0392b',AMBER='#d4820a',TEAL='#0e7c6a',BLUE='#1a56a0',
+        PURPLE='#6d3fb5',GREEN='#1a7a4a',GRAY='#2c3e50',LIGHT='#f4f6fb',
+        WHITE='#ffffff',BORDER='#dde3ef';
+  function bSVG(data,colors,labels,maxV,unit){
+    const W=460,H=170,pl=44,pb=20,pt=12;
+    let s=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif"><rect width="${W}" height="${H}" fill="${LIGHT}" rx="6"/>`;
+    const bw=Math.floor((W-pl-8)/data.length)-4;
+    data.forEach((v,i)=>{
+      const x=pl+i*(bw+4);
+      const bh=Math.max(4,(v/maxV)*(H-pt-pb));
+      const y=pt+(H-pt-pb)-bh;
+      s+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${colors[i%colors.length]}" rx="3"/>`;
+      s+=`<text x="${x+bw/2}" y="${y-4}" font-size="9" fill="${GRAY}" text-anchor="middle" font-weight="bold">${v}${unit||''}</text>`;
+      s+=`<text x="${x+bw/2}" y="${H-4}" font-size="8" fill="${GRAY}" text-anchor="middle">${labels[i]}</text>`;
+    });
+    s+='</svg>';return s;
+  }
+  function lSVG(vals,labels,color){
+    const W=440,H=130,pl=36,pb=22,pt=12,pr=8;
+    const maxV=Math.max(...vals)*1.1;
+    const pts=vals.map((v,i)=>[pl+i*(W-pl-pr)/(vals.length-1),pt+(H-pt-pb)*(1-v/maxV)]);
+    let s=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif"><rect width="${W}" height="${H}" fill="${LIGHT}" rx="6"/>`;
+    s+=`<path d="M${pts[0][0]},${H-pb} ${pts.map(p=>`L${p[0]},${p[1]}`).join(' ')} L${pts[pts.length-1][0]},${H-pb} Z" fill="${color}22"/>`;
+    s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    pts.forEach(([x,y],i)=>{s+=`<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="${WHITE}" stroke-width="1.5"/>`;s+=`<text x="${x}" y="${y-7}" font-size="8" fill="${GRAY}" text-anchor="middle" font-weight="bold">${vals[i]}</text>`;s+=`<text x="${x}" y="${H-5}" font-size="8" fill="#888" text-anchor="middle">${labels[i]}</text>`;});
+    s+='</svg>';return s;
+  }
+  function gSVG(){
+    const W=620,rowH=32,lw=180,T=11,ph=GP.length;
+    const H=26+ph*rowH+24;
+    const bw=(W-lw-16)/T;
+    let s=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif"><rect width="${W}" height="${H}" fill="${LIGHT}" rx="6"/>`;
+    for(let i=0;i<T;i++){
+      const x=lw+i*bw;
+      s+=`<text x="${x+bw/2}" y="16" font-size="8" fill="#888" text-anchor="middle">S${i+1}</text>`;
+      s+=`<line x1="${x}" x2="${x}" y1="20" y2="${H-16}" stroke="${BORDER}" stroke-width="1"/>`;
+    }
+    GP.forEach((p,i)=>{
+      const y=22+i*rowH,bx=lw+p.start*bw,barW=p.weeks*bw-2;
+      s+=`<text x="${lw-5}" y="${y+rowH/2+4}" font-size="9" fill="${GRAY}" text-anchor="end" font-weight="${p.critical?'bold':'normal'}">${p.area}</text>`;
+      s+=`<rect x="${bx+1}" y="${y+4}" width="${barW}" height="${rowH-8}" fill="${p.color}" rx="3"/>`;
+      if(p.critical&&p.weeks>=2)s+=`<text x="${bx+barW/2}" y="${y+rowH/2+4}" font-size="8" fill="${WHITE}" text-anchor="middle" font-weight="bold">${p.weeks} sem</text>`;
+      s+=`<text x="${W-5}" y="${y+rowH/2+4}" font-size="9" fill="${p.critical?RED:GRAY}" text-anchor="end" font-weight="bold">${p.weeks}s</text>`;
+    });
+    s+=`<line x1="${lw}" x2="${W-8}" y1="${H-8}" y2="${H-8}" stroke="${RED}" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    s+=`<text x="${W/2}" y="${H-1}" font-size="9" fill="${RED}" text-anchor="middle" font-weight="bold">TOTAL: ~11 SEMANAS (~3 meses)</text>`;
+    s+='</svg>';return s;
+  }
+  const total=D.anual.count.reduce((a,b)=>a+b,0);
+  const inversion=D.anual.costo.reduce((a,b)=>a+b,0);
+  const nota=D.notas.final[D.notas.final.length-1]||93.8;
+  const provRows=D.proveedores.slice(0,6).map((p,i)=>`<tr style="background:${i%2?LIGHT:WHITE}"><td style="padding:7px 10px;font-weight:bold">${i+1}</td><td style="padding:7px 10px;font-weight:600">${p.name}</td><td style="padding:7px 10px;text-align:center"><span style="background:#e8f4fd;color:${BLUE};padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px">${p.casos}</span></td><td style="padding:7px 10px;font-family:monospace;font-weight:700;color:${AMBER}">S/ ${p.inversion.toLocaleString('es-PE',{minimumFractionDigits:0})}</td><td style="padding:7px 10px;font-size:11px;color:#666">${(p.casos/total*100).toFixed(1)}%</td></tr>`).join('');
+  const clientRows=D.clientes.slice(0,8).map((c,i)=>`<tr style="background:${i%2?LIGHT:WHITE}"><td style="padding:7px 10px;font-weight:bold;color:${i===0?AMBER:GRAY}">${i+1}</td><td style="padding:7px 10px;font-weight:600">${c.name}</td><td style="padding:7px 10px;text-align:center"><span style="background:#fef3e2;color:${AMBER};padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px">${c.count}</span></td></tr>`).join('');
+  const hallRows=D.hallazgos.slice(0,6).map(h=>`<tr><td style="padding:6px 10px">${h.name}</td><td style="padding:6px 10px"><div style="background:#eee;border-radius:3px;height:10px;overflow:hidden"><div style="width:${h.val/33*100}%;background:${h.color};height:100%"></div></div></td><td style="padding:6px 10px;font-weight:bold;text-align:right">${h.val}</td></tr>`).join('');
+  const ncItems=D.nuevosClientes.slice(0,24).map(c=>`<div style="background:${LIGHT};border:1px solid ${BORDER};border-radius:6px;padding:6px 8px"><div style="font-weight:700;color:${TEAL};font-size:8px">${c.year}</div><div style="font-weight:600;font-size:9px;margin-top:1px">${c.name}</div></div>`).join('');
+
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Informe Ejecutivo Homologaciones - ${fechaC}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;color:${GRAY};font-size:12px;background:#fff}
+.cover{width:100%;min-height:280mm;background:linear-gradient(160deg,#0c1128,#1a1040 40%,#0f2040 70%,#1a0808);display:flex;flex-direction:column;justify-content:center;align-items:center;page-break-after:always;padding:60px 40px;text-align:center;position:relative}
+.cover-logo{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#e8343a,#c22);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:#fff;margin:0 auto 28px;box-shadow:0 0 40px rgba(232,52,58,0.5)}
+.cover-pre{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:12px}
+.cover-title{font-size:40px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:8px}
+.cover-title span{color:#e8343a}
+.cover-sub{font-size:16px;color:rgba(255,255,255,0.7);margin-bottom:40px}
+.cover-meta{display:flex;gap:40px;justify-content:center}
+.cm-val{font-size:32px;font-weight:800;color:#fff}.cm-val.red{color:#e8343a}.cm-val.gold{color:#f5c518}.cm-val.teal{color:#06d6a0}.cm-val.purple{color:#a78bfa}
+.cm-lbl{font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.cover-footer{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:10px;color:rgba(255,255,255,0.3)}
+.cover-conf{position:absolute;top:24px;right:32px;background:rgba(232,52,58,0.2);border:1px solid rgba(232,52,58,0.4);color:#ff8a80;padding:4px 14px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px}
+.page{width:210mm;min-height:280mm;padding:22mm 18mm 18mm;page-break-after:always;background:#fff}
+.page:last-child{page-break-after:auto}
+.ph{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #e8343a;padding-bottom:10px;margin-bottom:20px}
+.ph-badge{width:28px;height:28px;border-radius:7px;background:#e8343a;color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.ph-title{font-size:15px;font-weight:800;margin-left:10px}
+.ph-right{font-size:9px;color:#999;text-align:right}
+.kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.kbox{border-radius:10px;padding:14px;text-align:center;border:1px solid}
+.knum{font-size:28px;font-weight:800;line-height:1}
+.klbl{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;opacity:.7}
+.ktrend{font-size:9px;margin-top:6px;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:${GRAY};color:#fff;padding:8px 10px;text-align:left;font-size:10px;font-weight:600}
+td{padding:7px 10px;border-bottom:1px solid ${BORDER}}
+.sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#e8343a;margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+.sec::after{content:'';flex:1;height:1px;background:#eee}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.insight{background:${LIGHT};border-left:4px solid;border-radius:0 8px 8px 0;padding:10px 14px;margin:10px 0;font-size:11px;line-height:1.6}
+.rec{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.rec-n{width:22px;height:22px;border-radius:50%;background:#e8343a;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.rec-t{font-size:11px;line-height:1.6}
+.rec-tt{font-weight:700;margin-bottom:2px}
+.nc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.gn{background:${LIGHT};padding:8px 10px;border-radius:6px;font-size:10px}
+.gn-y{font-weight:700;color:${TEAL};font-size:9px}
+.gn-n{font-weight:600;margin-top:1px;line-height:1.3}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page,.cover{page-break-after:always}}
+@page{size:A4;margin:0}
+</style></head><body>
+<div class="cover">
+  <div class="cover-conf">CONFIDENCIAL - USO INTERNO</div>
+  <div class="cover-logo">L</div>
+  <div class="cover-pre">Informe Ejecutivo - Sistema de Gestion Integrada</div>
+  <div class="cover-title">Gestion de <span>Homologaciones</span></div>
+  <div class="cover-sub">Seguimiento, Control y Auditoria de Proveedores</div>
+  <div style="width:60px;height:3px;background:linear-gradient(90deg,#e8343a,#ff6b35);margin:0 auto 32px;border-radius:2px"></div>
+  <div class="cover-meta">
+    <div><div class="cm-val red">${total}</div><div class="cm-lbl">Homologaciones gestionadas</div></div>
+    <div><div class="cm-val gold">S/ ${Math.round(inversion/1000)}K</div><div class="cm-lbl">Inversion total 2023-2026</div></div>
+    <div><div class="cm-val teal">${nota}</div><div class="cm-lbl">Nota promedio obtenida</div></div>
+    <div><div class="cm-val purple">88.6%</div><div class="cm-lbl">Tasa de exito</div></div>
+  </div>
+  <div class="cover-footer">LIDERMAN - Area SGI - ${fecha} - Dashboard v3.0</div>
+</div>
+<div class="page">
+  <div class="ph"><div style="display:flex;align-items:center"><div class="ph-badge">L</div><div class="ph-title">Indicadores Clave de Gestion - KPIs</div></div><div class="ph-right">LIDERMAN - Area SGI<br>${fecha}<br>Pag 1 / 5</div></div>
+  <div class="kgrid">
+    <div class="kbox" style="background:#fef2f2;border-color:#fca5a5"><div class="knum" style="color:${RED}">${total}</div><div class="klbl" style="color:${RED}">Homologaciones Totales</div><div class="ktrend" style="color:#16a34a">+19% vs año anterior</div></div>
+    <div class="kbox" style="background:#fffbeb;border-color:#fcd34d"><div class="knum" style="color:${AMBER}">S/ ${Math.round(inversion/1000)}K</div><div class="klbl" style="color:${AMBER}">Inversion Total 2023-2026</div><div class="ktrend" style="color:${AMBER}">Promedio S/ 34K / año</div></div>
+    <div class="kbox" style="background:#f0fdf4;border-color:#86efac"><div class="knum" style="color:${TEAL}">${nota}</div><div class="klbl" style="color:${TEAL}">Nota Promedio Final</div><div class="ktrend" style="color:#16a34a">Mejora sostenida 3 años</div></div>
+    <div class="kbox" style="background:#f0fdf4;border-color:#86efac"><div class="knum" style="color:${GREEN}">148</div><div class="klbl" style="color:${GREEN}">Finalizados</div><div class="ktrend" style="color:#16a34a">88.6% tasa de exito</div></div>
+    <div class="kbox" style="background:#eff6ff;border-color:#93c5fd"><div class="knum" style="color:${BLUE}">19</div><div class="klbl" style="color:${BLUE}">En Proceso</div><div class="ktrend" style="color:${BLUE}">11.4% en curso activo</div></div>
+    <div class="kbox" style="background:#faf5ff;border-color:#c4b5fd"><div class="knum" style="color:${PURPLE}">${D.nuevosClientes.length}</div><div class="klbl" style="color:${PURPLE}">Nuevos Clientes 2024-26</div><div class="ktrend" style="color:#16a34a">Expansion portafolio</div></div>
+  </div>
+  <div class="sec">Evolucion Anual de Homologaciones</div>
+  ${bSVG(D.anual.count,['#c0392b','#1a56a0','#0e7c6a','#d4820a'],D.anual.labels,60,'')}
+  <div class="two" style="margin-top:14px">
+    <div><div class="sec">Inversion por Año (S/)</div>${lSVG(D.anual.costo,D.anual.labels,AMBER)}</div>
+    <div><div class="sec">Nota Promedio Final</div>${lSVG(D.notas.final,D.notas.labels,TEAL)}</div>
+  </div>
+  <div class="insight" style="border-color:${RED}"><strong style="color:${RED}">Analisis:</strong> El año 2025 marcó el record con <strong>56 homologaciones</strong> y la mayor inversion (<strong>S/ 52,735</strong>). La nota promedio muestra tendencia <strong>ascendente sostenida</strong> desde 2023, llegando a 100.0 en 2026.</div>
+</div>
+<div class="page">
+  <div class="ph"><div style="display:flex;align-items:center"><div class="ph-badge">L</div><div class="ph-title">Proveedores Homologadores y Clientes</div></div><div class="ph-right">LIDERMAN - Area SGI<br>${fecha}<br>Pag 2 / 5</div></div>
+  <div class="sec">Ranking Casas Homologadoras</div>
+  <table style="margin-bottom:16px"><thead><tr><th>#</th><th>Casa Homologadora</th><th>Casos</th><th>Inversion (S/)</th><th>Part. %</th></tr></thead><tbody>${provRows}</tbody></table>
+  <div class="two">
+    <div><div class="sec">Top Clientes - Mayor Demanda</div><table><thead><tr><th>#</th><th>Cliente</th><th>Hom.</th></tr></thead><tbody>${clientRows}</tbody></table></div>
+    <div><div class="sec">Distribucion por Proveedor</div>${bSVG(D.proveedores.slice(0,5).map(p=>p.casos),['#e8343a','#3b82f6','#06d6a0','#a78bfa','#f5c518'],D.proveedores.slice(0,5).map(p=>p.name.substring(0,8)),60,'')}</div>
+  </div>
+  <div class="insight" style="border-color:${BLUE}"><strong style="color:${BLUE}">Proveedor Principal:</strong> HODELPE concentra el 32% del volumen con 54 casos y S/ 29,634 en inversion. Se recomienda evaluar condiciones preferenciales por volumen.</div>
+</div>
+<div class="page">
+  <div class="ph"><div style="display:flex;align-items:center"><div class="ph-badge">L</div><div class="ph-title">Calidad - Notas y Hallazgos</div></div><div class="ph-right">LIDERMAN - Area SGI<br>${fecha}<br>Pag 3 / 5</div></div>
+  <div class="kgrid" style="margin-bottom:14px">
+    <div class="kbox" style="background:#f0fdf4;border-color:#86efac"><div class="knum" style="color:${TEAL};font-size:22px">56.6</div><div class="klbl" style="color:${TEAL}">Nota minima registrada</div></div>
+    <div class="kbox" style="background:#f0fdf4;border-color:#86efac"><div class="knum" style="color:${TEAL};font-size:22px">${nota}</div><div class="klbl" style="color:${TEAL}">Nota promedio final</div></div>
+    <div class="kbox" style="background:#f0fdf4;border-color:#86efac"><div class="knum" style="color:${TEAL};font-size:22px">100</div><div class="klbl" style="color:${TEAL}">Nota maxima alcanzada</div></div>
+  </div>
+  <div class="sec">Distribucion de Notas Obtenidas</div>
+  <div style="margin-bottom:14px">
+    ${[{r:'95 pts o mas',pct:48,color:TEAL},{r:'90 a 95 pts',pct:31,color:GREEN},{r:'80 a 90 pts',pct:16,color:AMBER},{r:'Menos de 80',pct:5,color:RED}].map(b=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div style="width:90px;font-size:10px;color:${GRAY}">${b.r}</div><div style="flex:1;background:#eee;border-radius:3px;height:12px;overflow:hidden"><div style="width:${b.pct}%;background:${b.color};height:100%;border-radius:3px"></div></div><div style="width:36px;font-size:11px;font-weight:700;color:${b.color};text-align:right">${b.pct}%</div></div>`).join('')}
+  </div>
+  <div class="sec">Hallazgos Negativos por Ambito</div>
+  <div class="two">
+    <table><thead><tr><th>Ambito</th><th>Distribucion</th><th>N</th></tr></thead><tbody>${hallRows}</tbody></table>
+    <div><p style="font-size:11px;color:#666;margin-top:6px;line-height:1.7"><strong style="color:${RED}">Finanzas</strong> concentra 33 observaciones (42% del total). Le siguen SSOMA (12) y Operaciones (10).</p></div>
+  </div>
+  <div class="insight" style="border-color:${TEAL}"><strong style="color:${TEAL}">Desempeno de Calidad:</strong> El 79% de homologaciones obtienen nota mayor a 90 pts. La mejora progresiva (92.7 a 100.0) valida la efectividad del proceso de gestion documental SGI.</div>
+</div>
+<div class="page">
+  <div class="ph"><div style="display:flex;align-items:center"><div class="ph-badge">L</div><div class="ph-title">Gantt - Tiempos de Demora por Area</div></div><div class="ph-right">LIDERMAN - Area SGI<br>${fecha}<br>Pag 4 / 5</div></div>
+  <div class="kgrid" style="margin-bottom:14px">
+    <div class="kbox" style="background:#fff8f0;border-color:#fcd34d"><div class="knum" style="color:${AMBER};font-size:20px">3 sem</div><div class="klbl" style="color:${AMBER}">Ops. Lideres Zonales</div><div class="ktrend" style="color:${RED}">Punto critico</div></div>
+    <div class="kbox" style="background:#eff6ff;border-color:#93c5fd"><div class="knum" style="color:${BLUE};font-size:20px">2 sem</div><div class="klbl" style="color:${BLUE}">Casa Homologadora</div><div class="ktrend" style="color:${RED}">Punto critico</div></div>
+    <div class="kbox" style="background:#fef2f2;border-color:#fca5a5"><div class="knum" style="color:${RED};font-size:20px">3 sem</div><div class="klbl" style="color:${RED}">Logist./Contab./Tesor.</div><div class="ktrend" style="color:${RED}">Punto critico</div></div>
+  </div>
+  <div class="sec">Mapa de Tiempos Promedio - Proceso Completo</div>
+  ${gSVG()}
+  <div style="background:#fff8f0;border:1px solid #fde8cc;border-radius:8px;padding:10px 14px;font-size:10px;color:#7a4f00;margin-top:10px;line-height:1.7">
+    <strong>Puntos criticos:</strong> Operaciones tarda 3 sem en enviar el Folder LIDERMAN. Casa Homologadora tarda 2 sem en coordinar la visita. Logistica/Contabilidad/Tesoreria acumulan 3 sem para el pago. <strong style="color:${RED}">Total estimado: ~11 semanas (~3 meses).</strong>
+  </div>
+  <div class="insight" style="border-color:${AMBER};margin-top:10px"><strong style="color:${AMBER}">Recomendacion SGI:</strong> Establecer SLAs internos (Operaciones max 10 dias, pago max 15 dias). Implementar alertas automaticas a los 5 dias sin movimiento. Reduccion potencial del ciclo: <strong>30-40%</strong>.</div>
+</div>
+<div class="page" style="page-break-after:auto">
+  <div class="ph"><div style="display:flex;align-items:center"><div class="ph-badge">L</div><div class="ph-title">Nuevos Clientes y Recomendaciones</div></div><div class="ph-right">LIDERMAN - Area SGI<br>${fecha}<br>Pag 5 / 5</div></div>
+  <div class="sec">Nuevos Clientes 2024-2026 <span style="font-size:10px;font-weight:400;color:#888">(${D.nuevosClientes.length} clientes nuevos)</span></div>
+  <div class="nc-grid">${D.nuevosClientes.slice(0,24).map(c=>`<div class="gn"><div class="gn-y">${c.year}</div><div class="gn-n">${c.name}</div></div>`).join('')}</div>
+  <div class="sec" style="margin-top:16px">Recomendaciones Ejecutivas</div>
+  <div class="rec"><div class="rec-n">1</div><div class="rec-t"><div class="rec-tt">Formalizar SLAs internos por area</div>Operaciones max 10 dias para Folder LIDERMAN. Logistica/Contabilidad/Tesoreria max 15 dias para pago. Casa Homologadora max 7 dias para respuesta. Esto eliminaria el principal cuello de botella.</div></div>
+  <div class="rec"><div class="rec-n">2</div><div class="rec-t"><div class="rec-tt">Renegociar con HODELPE condiciones preferenciales</div>Con 54 casos y S/ 29,634 invertidos es el socio estrategico dominante. Renegociar tarifas por volumen y tiempos de respuesta garantizados.</div></div>
+  <div class="rec"><div class="rec-n">3</div><div class="rec-t"><div class="rec-tt">Plan de accion para hallazgos en Finanzas (33 obs.)</div>El ambito financiero concentra el 42% de los hallazgos. Capacitacion y revision documental financiera previa a cada homologacion.</div></div>
+  <div class="rec"><div class="rec-n">4</div><div class="rec-t"><div class="rec-tt">Gestionar alertas de vencimiento de certificados</div>Con 2 certificados vencidos y 1 proximo, implementar alertas a 60 y 30 dias antes del vencimiento para evitar lapsos sin cobertura.</div></div>
+  <div class="rec"><div class="rec-n">5</div><div class="rec-t"><div class="rec-tt">Mantener sincronizacion con Google Sheets</div>La conexion activa permite visibilidad en tiempo real del estado de cada homologacion para toda la jefatura, sin necesidad de reportes manuales.</div></div>
+  <div style="margin-top:24px;border-top:2px solid #eee;padding-top:16px;display:flex;justify-content:space-between;align-items:flex-end">
+    <div><div style="font-size:10px;color:#999">Documento preparado por:</div><div style="font-size:13px;font-weight:700;color:${GRAY};margin-top:2px">Area SGI - LIDERMAN</div></div>
+    <div style="text-align:right"><div style="font-size:10px;color:#999">Fecha de emision:</div><div style="font-size:12px;font-weight:600;color:${GRAY};margin-top:2px">${fecha}</div><div style="font-size:9px;color:#bbb;margin-top:1px">Dashboard de Homologaciones v3.0</div></div>
+  </div>
+</div>
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`;
+
+  const win=window.open('','_blank','width=900,height=700');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+}
+
+/* ── INIT ── */
+document.getElementById('cur-date').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+Chart.defaults.color='#6b7cb3';
+Chart.defaults.borderColor='rgba(255,255,255,0.06)';
+Chart.defaults.font.family='DM Sans';
+buildGantt();
+loadFromGoogleSheets();
+
+</script>
+</body>
+</html>
